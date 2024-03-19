@@ -52,7 +52,16 @@ app.get('/names', (req,res) => {
 
 //Given a username, retrieve all of the user's postings
 app.get('/profile/:username', (req,res) => {
+    let queryString = "SELECT * FROM system.postings WHERE creator = '" + req.params.username + "';";
 
+    connection.query(queryString, (err, result) => {
+        if(err) {
+            res.statusCode = 409;
+            res.send("Error while retrieving posts: " + err);
+        };
+        res.status = 200;
+        res.send(JSON.stringify(result))
+    });
 });
 
 //Get the 100 most liked posts
@@ -104,7 +113,7 @@ app.put('/createPosting', (req,res) => {
 });
 
 //Modify an existing post
-app.post('/editPosting', (req,res) => {
+app.post('/editPosting/:post_id', (req,res) => {
 
 });
 
