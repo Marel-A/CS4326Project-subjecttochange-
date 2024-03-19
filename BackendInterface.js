@@ -112,9 +112,37 @@ app.put('/createPosting', (req,res) => {
     });
 });
 
-//Modify an existing post
+//Modify an existing post's title, description, number of likes, total donated in USD, creator, and contributors
 app.post('/editPosting/:post_id', (req,res) => {
+    const body = req.body
 
+    let changes = {};
+    for(let change in body) {
+        if(change == "title" || change == "description" || change == "num_likes" || change == "total_donated_USD" || change == "creator" || change == "contributors")
+            changes[change] = body[change];
+    }
+
+    if(Object.keys(changes).length == 0) {
+        res.status = 204;
+        res.send("No changes found in body, no changes made.");
+    }
+
+    let queryString = "UPDATE system.postings SET "
+
+    for(let change in changes) {
+        queryString += (change + " = " + "'" + changes[change] + "',");
+    }
+    queryString = queryString.substring(0,queryString.length-1);
+    queryString += " WHERE post_id = " + req.params.post_id;
+
+    connection.query(queryString, (err, result) => {
+        if(err) {
+            res.statusCode = 409;
+            res.send("Error while modifying posting: " + err);
+        };
+        console.log(result);
+        res.sendStatus(200);
+    });
 });
 
 //Delete an existing post
