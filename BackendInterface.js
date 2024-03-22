@@ -55,7 +55,7 @@ connection.connect( function(err) {
 
     //Get the 100 most liked posts
     app.get('/getMostLiked',(req,res) => {
-
+        
         let queryString = "SELECT * FROM system.postings ORDER BY num_likes DESC LIMIT 100;";
 
         connection.query(queryString, (err, result) => {
@@ -98,6 +98,35 @@ connection.connect( function(err) {
             res.status = 200;
             res.send(JSON.stringify(result))
         });
+    });
+
+    //Verify  pair of user credentials
+    app.get('/verifyCredentials', (req,res) => {
+
+        const body = req.body;
+        let input_username = body["username"];
+        let input_SHA256_pass = body["SHA256_pass"];
+
+        let queryString = "SELECT SHA256_pass FROM system.credentials WHERE username = '" + input_username + "';";;
+        connection.query(queryString, (err, result) => {
+            if(err) {
+                res.statusCode = 409;
+                res.send("Error while retrieving SHA256_pass from database: " + err);
+            };
+            //JSONresult = JSON.parse(result);
+            console.log("verification result: " + result[0]["SHA256_pass"]);
+            let database_SHA256_pass = result[0]["SHA256_pass"];
+
+            console.log("comparing " + input_SHA256_pass + " to " + database_SHA256_pass);
+
+            if(input_SHA256_pass == database_SHA256_pass) {
+                res.sendStatus(200);
+            }
+            res.sendStatus(401);
+
+
+
+        });
 
     });
 
@@ -132,6 +161,25 @@ connection.connect( function(err) {
             console.log(result);
             res.sendStatus(201);
         });
+    });
+
+    //Create a new pair of user credentials
+    app.put('/newCredentials', (req,res) => {
+
+        const body = req.body;
+        let username = body["username"];
+        let SHA256_pass = body["SHA256_pass"];
+
+        let queryString = "INSERT INTO system.credentials (username, SHA256_pass) VALUES ('" + username + "','" + SHA256_pass + "')";
+        connection.query(queryString, (err, result) => {
+            if(err) {
+                res.statusCode = 409;
+                res.send("Error while creating new credentials: " + err);
+            };
+            console.log("New username and password created");
+            res.sendStatus(201);
+        });
+
     });
 
     //Modify an existing post's title, description, number of likes, total donated in USD, creator, or contributors given the post ID
