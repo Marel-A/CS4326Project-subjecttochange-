@@ -5,6 +5,72 @@
 
 Data for postings and user credentials are stored in a MySQL database which is managed through a REST API built in Node.js
 
+## Local environment setup for local API
+### Requirements for setup:
+- Node.js
+(https://nodejs.org/en/download)
+- MySQL Community Server
+(https://dev.mysql.com/downloads/mysql/)
+- (Highly recommended) MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
+- (Highly Recommended) HTTP API testing software such as Postman (https://www.postman.com/downloads/)
+- (Highly Recommended) PM2 Process Manager (https://pm2.io/docs/runtime/guide/installation/)
+
+### Setup:
+1. Installing MySQL Community Server should automatically create a new connection for the database management system on localhost. During installation, be sure to set a username and password for the system.
+2. Execute the following query to setup the necessary tables:
+
+```
+CREATE DATABASE `system` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE TABLE system.credentials (
+  `username` varchar(100) NOT NULL,
+  `SHA256_pass` varchar(100) NOT NULL,
+  PRIMARY KEY (`username`,`SHA256_pass`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE system.postings (
+  `title` varchar(30) NOT NULL,
+  `description` varchar(45) NOT NULL,
+  `num_likes` int NOT NULL,
+  `total_donated_USD` int NOT NULL,
+  `creator` varchar(45) NOT NULL,
+  `contributors` varchar(45) NOT NULL,
+  `date_time_made` datetime DEFAULT NULL,
+  `post_id` varchar(100) NOT NULL,
+  PRIMARY KEY (`title`,`description`,`num_likes`,`total_donated_USD`,`creator`,`contributors`,`post_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+```
+This may be done by connecting to the mySQL server on mySQL Workbench and pasting this query into a new query tab and running the query, or connect in the terminal with
+```
+mysql -u username -p
+```
+then enter the password and paste the query to execute
+
+3. Open BackendInterface.js in an editor. At line 22
+```
+var  connection  =  mySQL.createConnection({
+	host:  "localhost",
+	user:  "root",
+	password:  "password"
+});
+```
+modify the values for user and password with your MySQL connection username and password
+
+4. Navigate to BackendInterface.js in the terminal and run with
+
+```
+node BackendInterface.js
+```
+If you have pm2 installed, use
+```
+pm2 start BackendInterface.js
+```
+and monitor the logs with 
+```
+pm2 monit
+```
+pm2 is easier to use here because when an API call causes an error with the SQL server, the instance of BackendInterface.js automatically shuts down when using node, but with pm2, the instance instead automatically restarts so that you don't have to keep manually restarting every time an error with the SQL database occurs.
+
+5. Setup is complete, start making API calls using a tool like PostMan to try out interfacing with the backend
+
 ## MySQL database layout:
 
 Schema 'system' contains tables 'credentials' and 'postings'.
@@ -106,70 +172,3 @@ It is optional to include changes to title, description, num_likes, total_donate
 Given a post's ID, the post corresponding to this post ID will be removed.
 - Parameters: a posting's ID for parameter :post_id (hint for getting post_id: users may only be able to delete their own posts, so use /profile/username method to get users posts, then get post_id from any of the posting objects in the JSON response array)
 - Response: status 200 indicates that the posting correlated to the :post_id parameter was successfully removed from the database. Status 409 indicates an error occurred between the API and the database, and the error will be logged.
-
-
-## Local environment setup for local API
-### Requirements for setup:
-- Node.js
-(https://nodejs.org/en/download)
-- MySQL Community Server
-(https://dev.mysql.com/downloads/mysql/)
-- (Highly recommended) MySQL Workbench (https://dev.mysql.com/downloads/workbench/)
-- (Highly Recommended) HTTP API testing software such as Postman (https://www.postman.com/downloads/)
-- (Highly Recommended) PM2 Process Manager (https://pm2.io/docs/runtime/guide/installation/)
-
-### Setup:
-1. Installing MySQL Community Server should automatically create a new connection for the database management system on localhost. During installation, be sure to set a username and password for the system.
-2. Execute the following query to setup the necessary tables:
-
-```
-CREATE DATABASE `system` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-CREATE TABLE system.credentials (
-  `username` varchar(100) NOT NULL,
-  `SHA256_pass` varchar(100) NOT NULL,
-  PRIMARY KEY (`username`,`SHA256_pass`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE system.postings (
-  `title` varchar(30) NOT NULL,
-  `description` varchar(45) NOT NULL,
-  `num_likes` int NOT NULL,
-  `total_donated_USD` int NOT NULL,
-  `creator` varchar(45) NOT NULL,
-  `contributors` varchar(45) NOT NULL,
-  `date_time_made` datetime DEFAULT NULL,
-  `post_id` varchar(100) NOT NULL,
-  PRIMARY KEY (`title`,`description`,`num_likes`,`total_donated_USD`,`creator`,`contributors`,`post_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-```
-This may be done by connecting to the mySQL server on mySQL Workbench and pasting this query into a new query tab and running the query, or connect in the terminal with
-```
-mysql -u username -p
-```
-then enter the password and paste the query to execute
-
-3. Open BackendInterface.js in an editor. At line 22
-```
-var  connection  =  mySQL.createConnection({
-	host:  "localhost",
-	user:  "root",
-	password:  "password"
-});
-```
-modify the values for user and password with your MySQL connection username and password
-
-4. Navigate to BackendInterface.js in the terminal and run with
-
-```
-node BackendInterface.js
-```
-If you have pm2 installed, use
-```
-pm2 start BackendInterface.js
-```
-and monitor the logs with 
-```
-pm2 monit
-```
-pm2 is easier to use here because when an API call causes an error with the SQL server, the instance of BackendInterface.js automatically shuts down when using node, but with pm2, the instance instead automatically restarts so that you don't have to keep manually restarting every time an error with the SQL database occurs.
-
-5. Setup is complete, start making API calls using a tool like PostMan to try out interfacing with the backend
